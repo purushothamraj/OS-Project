@@ -1,0 +1,65 @@
+from queue import PriorityQueue
+
+class Job:
+    def __init__(self, name, arrival_time, estimated_run_time):
+        self.name = name
+        self.arrival_time = arrival_time
+        self.estimated_run_time = estimated_run_time
+        self.waiting_time = 0
+    
+    def priority(self, current_time):
+        return 1 + self.waiting_time / self.estimated_run_time
+    
+    def __lt__(self, other):
+        return self.priority < other.priority
+    
+    def __str__(self):
+        return self.name
+
+def simulate(jobs):
+    current_time = 0
+    waiting_time = {}
+    job_queue = PriorityQueue()
+    
+    for job in jobs:
+        job_queue.put((job.arrival_time, job))
+        waiting_time[job.name] = 0
+    
+    print("Gantt Chart:")
+    while not job_queue.empty():
+        _, job = job_queue.get()
+        print(f"{current_time} - {current_time + job.estimated_run_time}: {job}")
+        
+        waiting_time[job.name] += current_time - job.arrival_time
+        current_time += job.estimated_run_time
+        
+        for waiting_job in job_queue.queue:
+            waiting_job[1].waiting_time += job.estimated_run_time
+    
+        if job_queue.empty():
+            break
+        
+        next_job = job_queue.queue[0][1]
+        while current_time < next_job.arrival_time:
+            print(f"{current_time} - {next_job.arrival_time}: IDLE")
+            current_time = next_job.arrival_time
+        
+    total_waiting_time = sum(waiting_time.values())
+    average_waiting_time = total_waiting_time / len(jobs)
+    
+    print(f"Individual Waiting Times: {waiting_time}")
+    print(f"Average Waiting Time: {average_waiting_time}")
+
+if __name__ == "__main__":
+    jobs = []
+    num_jobs = int(input("Enter the number of jobs: "))
+    
+    for i in range(num_jobs):
+        name = input(f"Enter the name of job {i+1}: ")
+        arrival_time = int(input(f"Enter the arrival time of job {i+1}: "))
+        estimated_run_time = int(input(f"Enter the estimated run time of job {i+1}: "))
+        jobs.append(Job(name, arrival_time, estimated_run_time))
+    
+    jobs.sort(key=lambda job: job.arrival_time)
+    
+    simulate(jobs)
